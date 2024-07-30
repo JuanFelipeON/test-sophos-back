@@ -48,17 +48,37 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-export const postUser = async (req: Request, res: Response) => {
+export const newUser = async (req: Request, res: Response) => {
   const { body } = req;
 
   try {
-    body.password = await dataEncryption(body.password);
-    connection.query("INSERT INTO USER set ?", [body], (err, data) => {
-      if (err) throw err;
-      res.json({
-        msg: "Usuario Agregado con éxito",
-      });
-    });
+    // Verificar si el email ya existe
+    connection.query(
+      "SELECT * FROM USER WHERE email = ?",
+      [body.email],
+      async (err, data) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ msg: "Error al verificar el email", error: err });
+        }
+
+        if (data.length > 0) {
+          return res.status(400).json({ msg: "El email ya está registrado" });
+        }
+
+        // Encriptar la contraseña
+        body.password = await dataEncryption(body.password);
+
+        // Insertar el nuevo usuario
+        connection.query("INSERT INTO USER set ?", [body], (err, data) => {
+          if (err) throw err;
+          res.json({
+            msg: "Usuario agregado con éxito",
+          });
+        });
+      }
+    );
   } catch (error) {
     console.error(error);
     res.status(500).json({

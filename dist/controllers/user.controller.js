@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postUser = exports.loginUser = void 0;
+exports.newUser = exports.loginUser = void 0;
 const connection_1 = __importDefault(require("../db/connection"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -51,17 +51,30 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.loginUser = loginUser;
-const postUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const newUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { body } = req;
     try {
-        body.password = yield dataEncryption(body.password);
-        connection_1.default.query("INSERT INTO USER set ?", [body], (err, data) => {
-            if (err)
-                throw err;
-            res.json({
-                msg: "Usuario Agregado con éxito",
+        // Verificar si el email ya existe
+        connection_1.default.query("SELECT * FROM USER WHERE email = ?", [body.email], (err, data) => __awaiter(void 0, void 0, void 0, function* () {
+            if (err) {
+                return res
+                    .status(500)
+                    .json({ msg: "Error al verificar el email", error: err });
+            }
+            if (data.length > 0) {
+                return res.status(400).json({ msg: "El email ya está registrado" });
+            }
+            // Encriptar la contraseña
+            body.password = yield dataEncryption(body.password);
+            // Insertar el nuevo usuario
+            connection_1.default.query("INSERT INTO USER set ?", [body], (err, data) => {
+                if (err)
+                    throw err;
+                res.json({
+                    msg: "Usuario agregado con éxito",
+                });
             });
-        });
+        }));
     }
     catch (error) {
         console.error(error);
@@ -70,7 +83,7 @@ const postUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         });
     }
 });
-exports.postUser = postUser;
+exports.newUser = newUser;
 function dataEncryption(text) {
     return __awaiter(this, void 0, void 0, function* () {
         const saltRounds = 10;
