@@ -18,23 +18,24 @@ export const loginUser = async (req: Request, res: Response) => {
             .status(500)
             .json({ msg: "Error al buscar el usuario", error: err });
         }
-
+        // Usuario no registrado
         if (data.length === 0) {
           return res.status(404).json({ msg: "Usuario no encontrado" });
         }
-
+        // Encriptacion de la contrasena
         const user = data[0];
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
           return res.status(401).json({ msg: "Contraseña incorrecta" });
         }
-
+        // Creacion del token
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
           expiresIn: "1h",
         });
 
         res.json({
+          error: false,
           msg: "Login exitoso",
           token,
         });
@@ -43,6 +44,7 @@ export const loginUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({
+      error: true,
       msg: "Error al iniciar sesión",
     });
   }

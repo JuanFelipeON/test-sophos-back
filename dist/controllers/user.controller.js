@@ -26,14 +26,17 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                     .status(500)
                     .json({ msg: "Error al buscar el usuario", error: err });
             }
+            // Usuario no registrado
             if (data.length === 0) {
                 return res.status(404).json({ msg: "Usuario no encontrado" });
             }
+            // Encriptacion de la contrasena
             const user = data[0];
             const isMatch = yield bcryptjs_1.default.compare(password, user.password);
             if (!isMatch) {
                 return res.status(401).json({ msg: "Contraseña incorrecta" });
             }
+            // Creacion del token
             const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.email }, JWT_SECRET, {
                 expiresIn: "1h",
             });
