@@ -22,14 +22,13 @@ export const loginUser = async (req: Request, res: Response) => {
         if (data.length === 0) {
           return res.status(404).json({ msg: "Usuario no encontrado" });
         }
-        // Encriptacion de la contrasena
+        // Comparacion de la password
         const user = data[0];
         const isMatch = await bcrypt.compare(password, user.password);
-
         if (!isMatch) {
           return res.status(401).json({ msg: "Contraseña incorrecta" });
         }
-        // Creacion del token
+        // Creacion del token de autenticacion
         const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
           expiresIn: "1h",
         });
@@ -38,6 +37,7 @@ export const loginUser = async (req: Request, res: Response) => {
           error: false,
           msg: "Login exitoso",
           token,
+          userName: user.nombre,
         });
       }
     );
